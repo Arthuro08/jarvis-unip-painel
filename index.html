@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0b1120" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='28' fill='%230b1120'/%3E%3Ctext x='64' y='84' font-size='64' text-anchor='middle'%3E%F0%9F%A7%A0%3C/text%3E%3C/svg%3E" />
+  <script>if(location.protocol.startsWith('http')){var m=document.createElement('link');m.rel='manifest';m.href='manifest.json';document.head.appendChild(m);}</script>
+  <title>Jarvis UNIP — Assistente Acadêmico</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #151f32;
+      --card-hover: #1e293b;
+      --border: #26354d;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --urgent: #ef4444;
+      --urgent-bg: rgba(239, 68, 68, 0.14);
+      --warn: #f59e0b;
+      --warn-bg: rgba(245, 158, 11, 0.14);
+      --ok: #10b981;
+      --ok-bg: rgba(16, 185, 129, 0.14);
+      --neutral: #64748b;
+      --neutral-bg: rgba(100, 116, 139, 0.16);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 84px;
+      line-height: 1.45;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(11, 17, 32, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px 12px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+    }
+    .brand h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
+    .brand p { font-size: 11px; color: var(--muted); }
+    .sync-pill {
+      font-size: 11px;
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 4px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .container { max-width: 760px; margin: 0 auto; padding: 14px 14px 24px; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .kpi {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+      user-select: none;
+    }
+    .kpi:active { transform: scale(0.97); }
+    .kpi.active {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.12);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+    .kpi-num { font-size: 20px; font-weight: 800; line-height: 1.1; }
+    .kpi-label { font-size: 10px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .search-wrap {
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .search-bar {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 36px 11px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+    }
+    .search-bar:focus { border-color: var(--accent); }
+    .clear-search {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: var(--muted);
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .clear-search.visible { display: inline-flex; }
+    .results-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      padding: 0 4px;
+    }
+    .filters {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+      scrollbar-width: none;
+    }
+    .filters::-webkit-scrollbar { display: none; }
+    .chip {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .chip.active {
+      background: var(--accent);
+      color: #082f49;
+      border-color: var(--accent);
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .clickable-card { cursor: pointer; }
+    .clickable-card:hover { border-color: rgba(56, 189, 248, 0.45); }
+    .card-urgent { border-left: 4px solid var(--urgent); }
+    .card-warn { border-left: 4px solid var(--warn); }
+    .card-ok { border-left: 4px solid var(--ok); }
+    .card-neutral { border-left: 4px solid var(--neutral); }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .badge-urgent { background: var(--urgent-bg); color: #fca5a5; }
+    .badge-warn { background: var(--warn-bg); color: #fcd34d; }
+    .badge-ok { background: var(--ok-bg); color: #6ee7b7; }
+    .badge-neutral { background: var(--neutral-bg); color: #cbd5e1; }
+    .assign-id {
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.05);
+      padding: 2px 6px;
+      border-radius: 5px;
+    }
+    .course-tag {
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+    .task-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .actions-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      background: var(--card-hover);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: rgba(56, 189, 248, 0.16);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: var(--accent);
+    }
+    .intro-box {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 9px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border);
+      font-size: 12.5px;
+      color: #cbd5e1;
+      white-space: pre-line;
+      max-height: 260px;
+      overflow-y: auto;
+      cursor: default;
+    }
+    .intro-box.open { display: block; }
+    .grade-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      margin-top: 8px;
+    }
+    .grade-table th, .grade-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    .grade-table th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; }
+    .grade-val { font-weight: 700; color: var(--accent); text-align: center; }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 30;
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      padding: 10px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav-btn.active { color: var(--accent); }
+    .nav-icon { font-size: 17px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-icon">🧠</div>
+        <div>
+          <h1>Jarvis UNIP</h1>
+          <p id="student-info">Sheyla Nayara • CST Estética e Cosmética</p>
+        </div>
+      </div>
+      <div class="sync-pill" id="sync-time">Sincronizado</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- TAB 1: RADAR -->
+    <section id="tab-radar" class="tab-panel active">
+      <div class="kpi-grid">
+        <div class="kpi active" id="kpi-card-urgent" data-kpi="urgentes_7d" onclick="setFilter('urgentes_7d')">
+          <div class="kpi-num" id="kpi-urgent" style="color:#f87171">0</div>
+          <div class="kpi-label">7 Dias</div>
+        </div>
+        <div class="kpi active" id="kpi-card-ontime" data-kpi="no_prazo" onclick="setFilter('no_prazo')">
+          <div class="kpi-num" id="kpi-ontime" style="color:#34d399">0</div>
+          <div class="kpi-label">No Prazo</div>
+        </div>
+        <div class="kpi" id="kpi-card-openlate" data-kpi="atrasadas_abertas" onclick="setFilter('atrasadas_abertas')">
+          <div class="kpi-num" id="kpi-openlate" style="color:#fbbf24">0</div>
+          <div class="kpi-label">Atraso Abertas</div>
+        </div>
+        <div class="kpi" id="kpi-card-done" data-kpi="entregues" onclick="switchTab('entregues')">
+          <div class="kpi-num" id="kpi-done" style="color:#38bdf8">0</div>
+          <div class="kpi-label">Entregues</div>
+        </div>
+      </div>
+
+      <div class="search-wrap">
+        <input type="search" id="search-input" class="search-bar" placeholder="🔍 Filtrar por matéria, atividade ou ID..." oninput="renderTasks()" />
+        <button type="button" id="clear-search-btn" class="clear-search" onclick="clearSearch()" title="Limpar busca">✕</button>
+      </div>
+
+      <div class="filters">
+        <button class="chip active" data-filter="foco" onclick="setFilter('foco')">🎯 Urgentes & No Prazo</button>
+        <button class="chip" data-filter="urgentes_7d" onclick="setFilter('urgentes_7d')">🔥 7 Dias</button>
+        <button class="chip" data-filter="no_prazo" onclick="setFilter('no_prazo')">🟢 No Prazo</button>
+        <button class="chip" data-filter="atrasadas_abertas" onclick="setFilter('atrasadas_abertas')">🔓 Atrasadas (Abertas)</button>
+        <button class="chip" data-filter="sem_prazo" onclick="setFilter('sem_prazo')">⚪ Sem Prazo</button>
+        <button class="chip" data-filter="todas_pendentes" onclick="setFilter('todas_pendentes')">📋 Todas Pendentes</button>
+      </div>
+
+      <div class="results-bar">
+        <span id="results-count">Carregando...</span>
+      </div>
+
+      <div id="radar-list"></div>
+    </section>
+
+    <!-- TAB 2: DISCIPLINAS -->
+    <section id="tab-cursos" class="tab-panel">
+      <div id="cursos-list"></div>
+    </section>
+
+    <!-- TAB 3: NOTAS -->
+    <section id="tab-notas" class="tab-panel">
+      <div id="notas-list"></div>
+    </section>
+
+    <!-- TAB 4: ENTREGUES -->
+    <section id="tab-entregues" class="tab-panel">
+      <div id="entregues-list"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="radar" onclick="switchTab('radar')">
+      <span class="nav-icon">🚨</span><span>Radar</span>
+    </button>
+    <button class="nav-btn" data-tab="cursos" onclick="switchTab('cursos')">
+      <span class="nav-icon">📚</span><span>Matérias</span>
+    </button>
+    <button class="nav-btn" data-tab="notas" onclick="switchTab('notas')">
+      <span class="nav-icon">📊</span><span>Notas</span>
+    </button>
+    <button class="nav-btn" data-tab="entregues" onclick="switchTab('entregues')">
+      <span class="nav-icon">✅</span><span>Entregues</span>
+    </button>
+  </nav>
+
+  <script>
+    const DATA = {"ultima_sincronizacao": "26/10/2026 às 00:07:47", "aluno": {"nome": "SHEYLA NAYARA BEZERRA DA SILVA", "curso": "CST ESTÉTICA E COSMÉTICA", "instituto": "SEPI", "turno": "NOT-STEC"}, "todas_tarefas": [{"assign_id": "TRAB_7597_60_735", "curso_id": "7597-60", "curso_nome": "ANATOMIA BASICA DOS SISTEMAS", "nome": "Práticas — ANATOMIA BASICA DOS SISTEMAS", "tipo": "práticas", "situacao": "Não entregue", "entregue": false, "duedate": 1795229940, "duedate_fmt": "20/11/2026 às 23:59", "canedit": true, "status_envio_raw": "Não entregue", "status_avaliacao": "Pendente de envio", "intro": "Trabalho Acadêmico oficial da UNIP (Práticas) para a disciplina ANATOMIA BASICA DOS SISTEMAS. Regime: Regular.", "anexos": [], "url": "https://trabalhosacademicos.unip.br/entrega/?token=f9d6f9a7080d4132aada8ca385e86912", "inputs": {"idTurma": "159124", "idTrabalho": "0", "idDisciplina": "735", "codigoDisciplina": "7597-60", "nomeDisciplina": "ANATOMIA BASICA DOS SISTEMAS", "codigoCurso": "36601", "codigoTurma": "SEPI_CM_0726"}, "status_prazo": "🟢 No Prazo (25d restantes)"}, {"assign_id": "TRAB_7600_60_752", "curso_id": "7600-60", "curso_nome": "TECNICAS EM ESTETICA CORPORAL", "nome": "Práticas — TECNICAS EM ESTETICA CORPORAL", "tipo": "práticas", "situacao": "Não entregue", "entregue": false, "duedate": 1795229940, "duedate_fmt": "20/11/2026 às 23:59", "canedit": true, "status_envio_raw": "Não entregue", "status_avaliacao": "Pendente de envio", "intro": "Trabalho Acadêmico oficial da UNIP (Práticas) para a disciplina TECNICAS EM ESTETICA CORPORAL. Regime: Regular.", "anexos": [], "url": "https://trabalhosacademicos.unip.br/entrega/?token=f9d6f9a7080d4132aada8ca385e86912", "inputs": {"idTurma": "159124", "idTrabalho": "0", "idDisciplina": "752", "codigoDisciplina": "7600-60", "nomeDisciplina": "TECNICAS EM ESTETICA CORPORAL", "codigoCurso": "36601", "codigoTurma": "SEPI_CM_0726"}, "status_prazo": "🟢 No Prazo (25d restantes)"}, {"assign_id": "TRAB_8516_35_4", "curso_id": "8516-35", "curso_nome": "PROJETO INTEGRADO MULTIDISCIPLINAR IV - CM", "nome": "PIM — PROJETO INTEGRADO MULTIDISCIPLINAR IV - CM", "tipo": "pim", "situacao": "Não entregue", "entregue": false, "duedate": 1794625140, "duedate_fmt": "13/11/2026 às 23:59", "canedit": true, "status_envio_raw": "Não entregue", "status_avaliacao": "Pendente de envio", "intro": "Trabalho Acadêmico oficial da UNIP (PIM) para a disciplina PROJETO INTEGRADO MULTIDISCIPLINAR IV - CM. Regime: Regular.", "anexos": [], "url": "https://trabalhosacademicos.unip.br/entrega/?token=f9d6f9a7080d4132aada8ca385e86912", "inputs": {"idTurma": "159055", "idTrabalho": "0", "idDisciplina": "4", "codigoDisciplina": "8516-35", "nomeDisciplina": "PROJETO INTEGRADO MULTIDISCIPLINAR IV - CM", "codigoCurso": "36601", "codigoTurma": "SEPI_CM_0726"}, "status_prazo": "🟢 No Prazo (18d restantes)"}, {"assign_id": "TRAB_8515_35_3", "curso_id": "8515-35", "curso_nome": "Projeto Integrado Multidisciplinar III", "nome": "PIM — Projeto Integrado Multidisciplinar III", "tipo": "pim", "situacao": "Aguardando correção", "entregue": true, "duedate": 1794625140, "duedate_fmt": "13/11/2026 às 23:59", "canedit": false, "status_envio_raw": "Aguardando correção", "status_avaliacao": "Aguardando correção", "intro": "Trabalho Acadêmico oficial da UNIP (PIM) para a disciplina Projeto Integrado Multidisciplinar III. Regime: Regular.", "anexos": [], "url": "https://trabalhosacademicos.unip.br/entrega/?token=f9d6f9a7080d4132aada8ca385e86912", "inputs": {"idTurma": "159055", "idTrabalho": "4076059", "idDisciplina": "3", "codigoDisciplina": "8515-35", "nomeDisciplina": "Projeto Integrado Multidisciplinar III", "codigoCurso": "36601", "codigoTurma": "SEPI_CM_0726"}, "status_prazo": "✅ Entregue"}, {"assign_id": "_5186527_1", "curso_id": "_464447_1", "curso_codigo": "7597-60", "curso_nome": "ANATOMIA BASICA DOS SISTEMAS", "nome": "QUESTIONÁRIO UNIDADE I", "secao": "QUESTIONÁRIO UNIDADE I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464447_1&content_id=_5186527_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "questionario", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186528_1", "curso_id": "_464447_1", "curso_codigo": "7597-60", "curso_nome": "ANATOMIA BASICA DOS SISTEMAS", "nome": "ATIVIDADE TELEAULA I", "secao": "ATIVIDADE TELEAULA I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464447_1&content_id=_5186528_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "teleaula", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186530_1", "curso_id": "_464447_1", "curso_codigo": "7597-60", "curso_nome": "ANATOMIA BASICA DOS SISTEMAS", "nome": "QUESTIONÁRIO UNIDADE II", "secao": "QUESTIONÁRIO UNIDADE II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464447_1&content_id=_5186530_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "questionario", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186531_1", "curso_id": "_464447_1", "curso_codigo": "7597-60", "curso_nome": "ANATOMIA BASICA DOS SISTEMAS", "nome": "ATIVIDADE TELEAULA II", "secao": "ATIVIDADE TELEAULA II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464447_1&content_id=_5186531_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "teleaula", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186533_1", "curso_id": "_464447_1", "curso_codigo": "7597-60", "curso_nome": "ANATOMIA BASICA DOS SISTEMAS", "nome": "QUESTIONÁRIO UNIDADE III", "secao": "QUESTIONÁRIO UNIDADE III", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464447_1&content_id=_5186533_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "questionario", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186534_1", "curso_id": "_464447_1", "curso_codigo": "7597-60", "curso_nome": "ANATOMIA BASICA DOS SISTEMAS", "nome": "ATIVIDADE TELEAULA III", "secao": "ATIVIDADE TELEAULA III", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464447_1&content_id=_5186534_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "teleaula", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186536_1", "curso_id": "_464447_1", "curso_codigo": "7597-60", "curso_nome": "ANATOMIA BASICA DOS SISTEMAS", "nome": "QUESTIONÁRIO UNIDADE IV", "secao": "QUESTIONÁRIO UNIDADE IV", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464447_1&content_id=_5186536_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "questionario", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186537_1", "curso_id": "_464447_1", "curso_codigo": "7597-60", "curso_nome": "ANATOMIA BASICA DOS SISTEMAS", "nome": "ATIVIDADE TELEAULA IV", "secao": "ATIVIDADE TELEAULA IV", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464447_1&content_id=_5186537_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "teleaula", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186513_1", "curso_id": "_464446_1", "curso_codigo": "7596-30", "curso_nome": "BIOLOGIA(CITOLOGIA/HISTOLOGIA)", "nome": "QUESTIONÁRIO UNIDADE I", "secao": "QUESTIONÁRIO UNIDADE I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464446_1&content_id=_5186513_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "questionario", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186514_1", "curso_id": "_464446_1", "curso_codigo": "7596-30", "curso_nome": "BIOLOGIA(CITOLOGIA/HISTOLOGIA)", "nome": "ATIVIDADE TELEAULA I", "secao": "ATIVIDADE TELEAULA I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464446_1&content_id=_5186514_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "teleaula", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186516_1", "curso_id": "_464446_1", "curso_codigo": "7596-30", "curso_nome": "BIOLOGIA(CITOLOGIA/HISTOLOGIA)", "nome": "QUESTIONÁRIO UNIDADE II", "secao": "QUESTIONÁRIO UNIDADE II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464446_1&content_id=_5186516_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "questionario", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186517_1", "curso_id": "_464446_1", "curso_codigo": "7596-30", "curso_nome": "BIOLOGIA(CITOLOGIA/HISTOLOGIA)", "nome": "ATIVIDADE TELEAULA II", "secao": "ATIVIDADE TELEAULA II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464446_1&content_id=_5186517_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "teleaula", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5184093_1", "curso_id": "_464277_1", "curso_codigo": "6979-30", "curso_nome": "COMUNICAÇÃO E EXPRESSÃO", "nome": "QUESTIONÁRIO UNIDADE I", "secao": "QUESTIONÁRIO UNIDADE I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464277_1&content_id=_5184093_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "questionario", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5184094_1", "curso_id": "_464277_1", "curso_codigo": "6979-30", "curso_nome": "COMUNICAÇÃO E EXPRESSÃO", "nome": "ATIVIDADE TELEAULA I", "secao": "ATIVIDADE TELEAULA I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464277_1&content_id=_5184094_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5184096_1", "curso_id": "_464277_1", "curso_codigo": "6979-30", "curso_nome": "COMUNICAÇÃO E EXPRESSÃO", "nome": "QUESTIONÁRIO UNIDADE II", "secao": "QUESTIONÁRIO UNIDADE II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464277_1&content_id=_5184096_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5184097_1", "curso_id": "_464277_1", "curso_codigo": "6979-30", "curso_nome": "COMUNICAÇÃO E EXPRESSÃO", "nome": "ATIVIDADE TELEAULA II", "secao": "ATIVIDADE TELEAULA II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464277_1&content_id=_5184097_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186545_1", "curso_id": "_464448_1", "curso_codigo": "7599-60", "curso_nome": "FISIOLOGIA", "nome": "QUESTIONÁRIO UNIDADE I", "secao": "QUESTIONÁRIO UNIDADE I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464448_1&content_id=_5186545_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "questionario", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186546_1", "curso_id": "_464448_1", "curso_codigo": "7599-60", "curso_nome": "FISIOLOGIA", "nome": "ATIVIDADE TELEAULA I", "secao": "ATIVIDADE TELEAULA I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464448_1&content_id=_5186546_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": true, "canedit": false, "status_envio_raw": "Revisto / Concluído", "status_avaliacao": "Concluído", "tipo": "teleaula", "intro": "Revisto", "anexos": [], "status_prazo": "✅ Entregue"}, {"assign_id": "_5186548_1", "curso_id": "_464448_1", "curso_codigo": "7599-60", "curso_nome": "FISIOLOGIA", "nome": "QUESTIONÁRIO UNIDADE II", "secao": "QUESTIONÁRIO UNIDADE II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464448_1&content_id=_5186548_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186549_1", "curso_id": "_464448_1", "curso_codigo": "7599-60", "curso_nome": "FISIOLOGIA", "nome": "ATIVIDADE TELEAULA II", "secao": "ATIVIDADE TELEAULA II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464448_1&content_id=_5186549_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186551_1", "curso_id": "_464448_1", "curso_codigo": "7599-60", "curso_nome": "FISIOLOGIA", "nome": "QUESTIONÁRIO UNIDADE III", "secao": "QUESTIONÁRIO UNIDADE III", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464448_1&content_id=_5186551_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186552_1", "curso_id": "_464448_1", "curso_codigo": "7599-60", "curso_nome": "FISIOLOGIA", "nome": "ATIVIDADE TELEAULA III", "secao": "ATIVIDADE TELEAULA III", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464448_1&content_id=_5186552_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186554_1", "curso_id": "_464448_1", "curso_codigo": "7599-60", "curso_nome": "FISIOLOGIA", "nome": "QUESTIONÁRIO UNIDADE IV", "secao": "QUESTIONÁRIO UNIDADE IV", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464448_1&content_id=_5186554_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186555_1", "curso_id": "_464448_1", "curso_codigo": "7599-60", "curso_nome": "FISIOLOGIA", "nome": "ATIVIDADE TELEAULA IV", "secao": "ATIVIDADE TELEAULA IV", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464448_1&content_id=_5186555_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5189749_1", "curso_id": "_464738_1", "curso_codigo": "8236-30", "curso_nome": "FUNDAMENTOS DE QUIMICA GERAL", "nome": "QUESTIONÁRIO UNIDADE I", "secao": "QUESTIONÁRIO UNIDADE I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464738_1&content_id=_5189749_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5189750_1", "curso_id": "_464738_1", "curso_codigo": "8236-30", "curso_nome": "FUNDAMENTOS DE QUIMICA GERAL", "nome": "ATIVIDADE TELEAULA I", "secao": "ATIVIDADE TELEAULA I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464738_1&content_id=_5189750_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5189752_1", "curso_id": "_464738_1", "curso_codigo": "8236-30", "curso_nome": "FUNDAMENTOS DE QUIMICA GERAL", "nome": "QUESTIONÁRIO UNIDADE II", "secao": "QUESTIONÁRIO UNIDADE II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464738_1&content_id=_5189752_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5189753_1", "curso_id": "_464738_1", "curso_codigo": "8236-30", "curso_nome": "FUNDAMENTOS DE QUIMICA GERAL", "nome": "ATIVIDADE TELEAULA II", "secao": "ATIVIDADE TELEAULA II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464738_1&content_id=_5189753_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5426926_1", "curso_id": "_484186_1", "curso_codigo": "8302-30", "curso_nome": "MARKETING PESSOAL  (OPTATIVA)", "nome": "QUESTIONÁRIO UNIDADE I", "secao": "QUESTIONÁRIO UNIDADE I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_484186_1&content_id=_5426926_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5426927_1", "curso_id": "_484186_1", "curso_codigo": "8302-30", "curso_nome": "MARKETING PESSOAL  (OPTATIVA)", "nome": "ATIVIDADE TELEAULA I", "secao": "ATIVIDADE TELEAULA I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_484186_1&content_id=_5426927_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5426929_1", "curso_id": "_484186_1", "curso_codigo": "8302-30", "curso_nome": "MARKETING PESSOAL  (OPTATIVA)", "nome": "QUESTIONÁRIO UNIDADE II", "secao": "QUESTIONÁRIO UNIDADE II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_484186_1&content_id=_5426929_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5426930_1", "curso_id": "_484186_1", "curso_codigo": "8302-30", "curso_nome": "MARKETING PESSOAL  (OPTATIVA)", "nome": "ATIVIDADE TELEAULA II", "secao": "ATIVIDADE TELEAULA II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_484186_1&content_id=_5426930_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5426932_1", "curso_id": "_484186_1", "curso_codigo": "8302-30", "curso_nome": "MARKETING PESSOAL  (OPTATIVA)", "nome": "QUESTIONÁRIO UNIDADE III", "secao": "QUESTIONÁRIO UNIDADE III", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_484186_1&content_id=_5426932_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5426933_1", "curso_id": "_484186_1", "curso_codigo": "8302-30", "curso_nome": "MARKETING PESSOAL  (OPTATIVA)", "nome": "ATIVIDADE TELEAULA III", "secao": "ATIVIDADE TELEAULA III", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_484186_1&content_id=_5426933_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5426935_1", "curso_id": "_484186_1", "curso_codigo": "8302-30", "curso_nome": "MARKETING PESSOAL  (OPTATIVA)", "nome": "QUESTIONÁRIO UNIDADE IV", "secao": "QUESTIONÁRIO UNIDADE IV", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_484186_1&content_id=_5426935_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5426936_1", "curso_id": "_484186_1", "curso_codigo": "8302-30", "curso_nome": "MARKETING PESSOAL  (OPTATIVA)", "nome": "ATIVIDADE TELEAULA IV", "secao": "ATIVIDADE TELEAULA IV", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_484186_1&content_id=_5426936_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186665_1", "curso_id": "_464455_1", "curso_codigo": "7611-60", "curso_nome": "NOCOES DE NUTRICAO E DIETETICA", "nome": "QUESTIONÁRIO UNIDADE I", "secao": "QUESTIONÁRIO UNIDADE I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464455_1&content_id=_5186665_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186666_1", "curso_id": "_464455_1", "curso_codigo": "7611-60", "curso_nome": "NOCOES DE NUTRICAO E DIETETICA", "nome": "ATIVIDADE TELEAULA I", "secao": "ATIVIDADE TELEAULA I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464455_1&content_id=_5186666_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186668_1", "curso_id": "_464455_1", "curso_codigo": "7611-60", "curso_nome": "NOCOES DE NUTRICAO E DIETETICA", "nome": "QUESTIONÁRIO UNIDADE II", "secao": "QUESTIONÁRIO UNIDADE II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464455_1&content_id=_5186668_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186669_1", "curso_id": "_464455_1", "curso_codigo": "7611-60", "curso_nome": "NOCOES DE NUTRICAO E DIETETICA", "nome": "ATIVIDADE TELEAULA II", "secao": "ATIVIDADE TELEAULA II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464455_1&content_id=_5186669_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186671_1", "curso_id": "_464455_1", "curso_codigo": "7611-60", "curso_nome": "NOCOES DE NUTRICAO E DIETETICA", "nome": "QUESTIONÁRIO UNIDADE III", "secao": "QUESTIONÁRIO UNIDADE III", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464455_1&content_id=_5186671_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186672_1", "curso_id": "_464455_1", "curso_codigo": "7611-60", "curso_nome": "NOCOES DE NUTRICAO E DIETETICA", "nome": "ATIVIDADE TELEAULA III", "secao": "ATIVIDADE TELEAULA III", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464455_1&content_id=_5186672_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186674_1", "curso_id": "_464455_1", "curso_codigo": "7611-60", "curso_nome": "NOCOES DE NUTRICAO E DIETETICA", "nome": "QUESTIONÁRIO UNIDADE IV", "secao": "QUESTIONÁRIO UNIDADE IV", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464455_1&content_id=_5186674_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186675_1", "curso_id": "_464455_1", "curso_codigo": "7611-60", "curso_nome": "NOCOES DE NUTRICAO E DIETETICA", "nome": "ATIVIDADE TELEAULA IV", "secao": "ATIVIDADE TELEAULA IV", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464455_1&content_id=_5186675_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186565_1", "curso_id": "_464449_1", "curso_codigo": "7600-60", "curso_nome": "TECNICAS EM ESTETICA CORPORAL", "nome": "QUESTIONÁRIO UNIDADE I", "secao": "QUESTIONÁRIO UNIDADE I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464449_1&content_id=_5186565_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186566_1", "curso_id": "_464449_1", "curso_codigo": "7600-60", "curso_nome": "TECNICAS EM ESTETICA CORPORAL", "nome": "ATIVIDADE TELEAULA I", "secao": "ATIVIDADE TELEAULA I", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464449_1&content_id=_5186566_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186568_1", "curso_id": "_464449_1", "curso_codigo": "7600-60", "curso_nome": "TECNICAS EM ESTETICA CORPORAL", "nome": "QUESTIONÁRIO UNIDADE II", "secao": "QUESTIONÁRIO UNIDADE II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464449_1&content_id=_5186568_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186569_1", "curso_id": "_464449_1", "curso_codigo": "7600-60", "curso_nome": "TECNICAS EM ESTETICA CORPORAL", "nome": "ATIVIDADE TELEAULA II", "secao": "ATIVIDADE TELEAULA II", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464449_1&content_id=_5186569_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186571_1", "curso_id": "_464449_1", "curso_codigo": "7600-60", "curso_nome": "TECNICAS EM ESTETICA CORPORAL", "nome": "QUESTIONÁRIO UNIDADE III", "secao": "QUESTIONÁRIO UNIDADE III", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464449_1&content_id=_5186571_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186572_1", "curso_id": "_464449_1", "curso_codigo": "7600-60", "curso_nome": "TECNICAS EM ESTETICA CORPORAL", "nome": "ATIVIDADE TELEAULA III", "secao": "ATIVIDADE TELEAULA III", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464449_1&content_id=_5186572_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186574_1", "curso_id": "_464449_1", "curso_codigo": "7600-60", "curso_nome": "TECNICAS EM ESTETICA CORPORAL", "nome": "QUESTIONÁRIO UNIDADE IV", "secao": "QUESTIONÁRIO UNIDADE IV", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464449_1&content_id=_5186574_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "questionario", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}, {"assign_id": "_5186575_1", "curso_id": "_464449_1", "curso_codigo": "7600-60", "curso_nome": "TECNICAS EM ESTETICA CORPORAL", "nome": "ATIVIDADE TELEAULA IV", "secao": "ATIVIDADE TELEAULA IV", "url": "https://ava.ead.unip.br/webapps/blackboard/content/launchAssessment.jsp?course_id=_464449_1&content_id=_5186575_1&mode=view", "duedate": 1796957940, "duedate_fmt": "10/12/2026 às 23:59", "entregue": false, "canedit": true, "status_envio_raw": "Pendente", "status_avaliacao": "Pendente de realização", "tipo": "teleaula", "intro": "Marca Revista", "anexos": [], "status_prazo": "🟢 No Prazo (45d restantes)"}], "cursos": [{"id": "_464447_1", "codigo": "7597-60", "fullname": "ANATOMIA BASICA DOS SISTEMAS", "tarefas_count": 9, "pdfs_count": 18, "presencas": [], "notas_trabalhos": [], "pdfs": [{"filename": "PLANO_DE_ENSINO.pdf", "secao": "PLANO DE ENSINO", "titulo": "PLANO DE ENSINO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186523-dt-content-rid-12206969_1/xid-12206969_1"}, {"filename": "APRESENTAÇÃO_DA_DISCIPLINA_SLIDESDE_AULA.pdf", "secao": "APRESENTAÇÃO DA DISCIPLINA", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186524-dt-content-rid-12206447_1/xid-12206447_1"}, {"filename": "ORIENTAÇÕES_PARA_A_PRÁTICA_MANUAL.pdf", "secao": "ORIENTAÇÕES PARA A PRÁTICA", "titulo": "MANUAL", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186525-dt-content-rid-3238840_1/xid-3238840_1"}, {"filename": "ORIENTAÇÕES_PARA_A_PRÁTICA_ROTEIRO.pdf", "secao": "ORIENTAÇÕES PARA A PRÁTICA", "titulo": "ROTEIRO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186525-dt-content-rid-3238841_1/xid-3238841_1"}, {"filename": "ORIENTAÇÕES_PARA_A_PRÁTICA_RELATÓRIO.pdf", "secao": "ORIENTAÇÕES PARA A PRÁTICA", "titulo": "RELATÓRIO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186525-dt-content-rid-5027265_1/xid-5027265_1"}, {"filename": "UNIDADE_I_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE I", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186526-dt-content-rid-3238843_1/xid-3238843_1"}, {"filename": "UNIDADE_I_RESOLUÇÃO_LT.pdf", "secao": "UNIDADE I", "titulo": "RESOLUÇÃO LT", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186526-dt-content-rid-3238844_1/xid-3238844_1"}, {"filename": "UNIDADE_I_SLIDESDE_AULA.pdf", "secao": "UNIDADE I", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186526-dt-content-rid-10544097_1/xid-10544097_1"}, {"filename": "UNIDADE_II_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE II", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186529-dt-content-rid-3238845_1/xid-3238845_1"}, {"filename": "UNIDADE_II_RESOLUÇÃO_LT.pdf", "secao": "UNIDADE II", "titulo": "RESOLUÇÃO LT", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186529-dt-content-rid-3238846_1/xid-3238846_1"}, {"filename": "UNIDADE_II_SLIDESDE_AULA.pdf", "secao": "UNIDADE II", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186529-dt-content-rid-10544096_1/xid-10544096_1"}, {"filename": "UNIDADE_III_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE III", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186532-dt-content-rid-3238847_1/xid-3238847_1"}, {"filename": "UNIDADE_III_RESOLUÇÃO_LT.pdf", "secao": "UNIDADE III", "titulo": "RESOLUÇÃO LT", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186532-dt-content-rid-3238848_1/xid-3238848_1"}, {"filename": "UNIDADE_III_SLIDESDE_AULA.pdf", "secao": "UNIDADE III", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186532-dt-content-rid-10597084_1/xid-10597084_1"}, {"filename": "UNIDADE_IV_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE IV", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186535-dt-content-rid-3238849_1/xid-3238849_1"}, {"filename": "UNIDADE_IV_RESOLUÇÃO_LT.pdf", "secao": "UNIDADE IV", "titulo": "RESOLUÇÃO LT", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186535-dt-content-rid-3238850_1/xid-3238850_1"}, {"filename": "UNIDADE_IV_SLIDESDE_AULA.pdf", "secao": "UNIDADE IV", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186535-dt-content-rid-10635034_1/xid-10635034_1"}, {"filename": "FÓRUM_DE_DISCUSSÃO_TEXTO_COMPLEMENTAR.pdf", "secao": "FÓRUM DE DISCUSSÃO", "titulo": "TEXTO COMPLEMENTAR", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186538-dt-content-rid-12207393_1/xid-12207393_1"}]}, {"id": "_476462_1", "codigo": "8518-50", "fullname": "ATIVIDADES DE EXTENSÃO II - CM", "tarefas_count": 0, "pdfs_count": 5, "presencas": [], "notas_trabalhos": [], "pdfs": [{"filename": "PLANO_DE_ENSINO.pdf", "secao": "PLANO DE ENSINO", "titulo": "PLANO DE ENSINO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5334286-dt-content-rid-19038119_1/xid-19038119_1"}, {"filename": "ORIENTAÇÕES_MANUAL_INSTITUCIONAL_DE_EXTENSÃO.pdf", "secao": "ORIENTAÇÕES", "titulo": "MANUAL INSTITUCIONAL DE EXTENSÃO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5334287-dt-content-rid-18355954_1/xid-18355954_1"}, {"filename": "ORIENTAÇÕES_GUIA_PRÁTICO_DA_AÇÃO_DE_EXTENSÃO.pdf", "secao": "ORIENTAÇÕES", "titulo": "GUIA PRÁTICO DA AÇÃO DE EXTENSÃO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5334287-dt-content-rid-19038120_1/xid-19038120_1"}, {"filename": "ORIENTAÇÕES_FICHAS.pdf", "secao": "ORIENTAÇÕES", "titulo": "FICHAS", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5334287-dt-content-rid-19038121_1/xid-19038121_1"}, {"filename": "ORIENTAÇÕES_FORMULÁRIO_DE_COMPROVAÇÃO_DE_ATIVIDADE_DE_EXTENSÃO.pdf", "secao": "ORIENTAÇÕES", "titulo": "FORMULÁRIO DE COMPROVAÇÃO DE ATIVIDADE DE EXTENSÃO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5334287-dt-content-rid-18704352_1/xid-18704352_1"}]}, {"id": "_464446_1", "codigo": "7596-30", "fullname": "BIOLOGIA(CITOLOGIA/HISTOLOGIA)", "tarefas_count": 4, "pdfs_count": 8, "presencas": [], "notas_trabalhos": [], "pdfs": [{"filename": "PLANO_DE_ENSINO.pdf", "secao": "PLANO DE ENSINO", "titulo": "PLANO DE ENSINO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186511-dt-content-rid-12206455_1/xid-12206455_1"}, {"filename": "UNIDADE_I_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE I", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186512-dt-content-rid-3195682_1/xid-3195682_1"}, {"filename": "UNIDADE_I_RESOLUÇÃO_LT.pdf", "secao": "UNIDADE I", "titulo": "RESOLUÇÃO LT", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186512-dt-content-rid-3195683_1/xid-3195683_1"}, {"filename": "UNIDADE_I_SLIDESDE_AULA.pdf", "secao": "UNIDADE I", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186512-dt-content-rid-3195684_1/xid-3195684_1"}, {"filename": "UNIDADE_II_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE II", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186515-dt-content-rid-3195685_1/xid-3195685_1"}, {"filename": "UNIDADE_II_RESOLUÇÃO_LT.pdf", "secao": "UNIDADE II", "titulo": "RESOLUÇÃO LT", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186515-dt-content-rid-3195686_1/xid-3195686_1"}, {"filename": "UNIDADE_II_SLIDESDE_AULA.pdf", "secao": "UNIDADE II", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186515-dt-content-rid-3195687_1/xid-3195687_1"}, {"filename": "FÓRUM_DE_DISCUSSÃO_TEXTO_COMPLEMENTAR.pdf", "secao": "FÓRUM DE DISCUSSÃO", "titulo": "TEXTO COMPLEMENTAR", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186519-dt-content-rid-3195681_1/xid-3195681_1"}]}, {"id": "_464277_1", "codigo": "6979-30", "fullname": "COMUNICAÇÃO E EXPRESSÃO", "tarefas_count": 4, "pdfs_count": 4, "presencas": [], "notas_trabalhos": [], "pdfs": [{"filename": "PLANO_DE_ENSINO.pdf", "secao": "PLANO DE ENSINO", "titulo": "PLANO DE ENSINO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5184090-dt-content-rid-11109137_1/xid-11109137_1"}, {"filename": "LIVRO_INTERATIVO_Download.pdf", "secao": "LIVRO INTERATIVO", "titulo": "Download", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5184091-dt-content-rid-3778379_1/xid-3778379_1"}, {"filename": "LIVRO_INTERATIVO_Resoluções_LT.pdf", "secao": "LIVRO INTERATIVO", "titulo": "Resoluções LT", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5184091-dt-content-rid-3778380_1/xid-3778380_1"}, {"filename": "FÓRUM_DE_DISCUSSÃO_TEXTO_COMPLEMENTAR.pdf", "secao": "FÓRUM DE DISCUSSÃO", "titulo": "TEXTO COMPLEMENTAR", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5184098-dt-content-rid-3778381_1/xid-3778381_1"}]}, {"id": "_464448_1", "codigo": "7599-60", "fullname": "FISIOLOGIA", "tarefas_count": 8, "pdfs_count": 10, "presencas": [], "notas_trabalhos": [], "pdfs": [{"filename": "PLANO_DE_ENSINO.pdf", "secao": "PLANO DE ENSINO", "titulo": "PLANO DE ENSINO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186543-dt-content-rid-12215962_1/xid-12215962_1"}, {"filename": "UNIDADE_I_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE I", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186544-dt-content-rid-3462079_1/xid-3462079_1"}, {"filename": "UNIDADE_I_SLIDESDE_AULA.pdf", "secao": "UNIDADE I", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186544-dt-content-rid-3462080_1/xid-3462080_1"}, {"filename": "UNIDADE_II_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE II", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186547-dt-content-rid-3462081_1/xid-3462081_1"}, {"filename": "UNIDADE_II_SLIDESDE_AULA.pdf", "secao": "UNIDADE II", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186547-dt-content-rid-3462082_1/xid-3462082_1"}, {"filename": "UNIDADE_III_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE III", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186550-dt-content-rid-3462083_1/xid-3462083_1"}, {"filename": "UNIDADE_III_SLIDESDE_AULA.pdf", "secao": "UNIDADE III", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186550-dt-content-rid-3462084_1/xid-3462084_1"}, {"filename": "UNIDADE_IV_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE IV", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186553-dt-content-rid-3462085_1/xid-3462085_1"}, {"filename": "UNIDADE_IV_SLIDESDE_AULA.pdf", "secao": "UNIDADE IV", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186553-dt-content-rid-3462086_1/xid-3462086_1"}, {"filename": "FÓRUM_DE_DISCUSSÃO_TEXTO_COMPLEMENTAR.pdf", "secao": "FÓRUM DE DISCUSSÃO", "titulo": "TEXTO COMPLEMENTAR", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186557-dt-content-rid-3462078_1/xid-3462078_1"}]}, {"id": "_464738_1", "codigo": "8236-30", "fullname": "FUNDAMENTOS DE QUIMICA GERAL", "tarefas_count": 4, "pdfs_count": 6, "presencas": [], "notas_trabalhos": [], "pdfs": [{"filename": "PLANO_DE_ENSINO.pdf", "secao": "PLANO DE ENSINO", "titulo": "PLANO DE ENSINO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5189747-dt-content-rid-16193904_1/xid-16193904_1"}, {"filename": "UNIDADE_I_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE I", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5189748-dt-content-rid-16193906_1/xid-16193906_1"}, {"filename": "UNIDADE_I_SLIDESDE_AULA.pdf", "secao": "UNIDADE I", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5189748-dt-content-rid-16193905_1/xid-16193905_1"}, {"filename": "UNIDADE_II_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE II", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5189751-dt-content-rid-16193908_1/xid-16193908_1"}, {"filename": "UNIDADE_II_SLIDESDE_AULA.pdf", "secao": "UNIDADE II", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5189751-dt-content-rid-16193907_1/xid-16193907_1"}, {"filename": "FÓRUM_DE_DISCUSSÃO_TEXTO_COMPLEMENTAR.pdf", "secao": "FÓRUM DE DISCUSSÃO", "titulo": "TEXTO COMPLEMENTAR", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5189754-dt-content-rid-16193909_1/xid-16193909_1"}]}, {"id": "_484186_1", "codigo": "8302-30", "fullname": "MARKETING PESSOAL  (OPTATIVA)", "tarefas_count": 8, "pdfs_count": 9, "presencas": [], "notas_trabalhos": [], "pdfs": [{"filename": "PLANO_DE_ENSINO.pdf", "secao": "PLANO DE ENSINO", "titulo": "PLANO DE ENSINO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5426924-dt-content-rid-11440268_1/xid-11440268_1"}, {"filename": "UNIDADE_I_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE I", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5426925-dt-content-rid-6788909_1/xid-6788909_1"}, {"filename": "UNIDADE_I_SLIDESDE_AULA.pdf", "secao": "UNIDADE I", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5426925-dt-content-rid-6788908_1/xid-6788908_1"}, {"filename": "UNIDADE_II_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE II", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5426928-dt-content-rid-6788911_1/xid-6788911_1"}, {"filename": "UNIDADE_II_SLIDESDE_AULA.pdf", "secao": "UNIDADE II", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5426928-dt-content-rid-6788910_1/xid-6788910_1"}, {"filename": "UNIDADE_III_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE III", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5426931-dt-content-rid-6788913_1/xid-6788913_1"}, {"filename": "UNIDADE_III_SLIDESDE_AULA.pdf", "secao": "UNIDADE III", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5426931-dt-content-rid-6788912_1/xid-6788912_1"}, {"filename": "UNIDADE_IV_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE IV", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5426934-dt-content-rid-6788915_1/xid-6788915_1"}, {"filename": "UNIDADE_IV_SLIDESDE_AULA.pdf", "secao": "UNIDADE IV", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5426934-dt-content-rid-6788914_1/xid-6788914_1"}]}, {"id": "_464455_1", "codigo": "7611-60", "fullname": "NOCOES DE NUTRICAO E DIETETICA", "tarefas_count": 8, "pdfs_count": 11, "presencas": [], "notas_trabalhos": [], "pdfs": [{"filename": "PLANO_DE_ENSINO.pdf", "secao": "PLANO DE ENSINO", "titulo": "PLANO DE ENSINO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186663-dt-content-rid-12601517_1/xid-12601517_1"}, {"filename": "UNIDADE_I_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE I", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186664-dt-content-rid-5809740_1/xid-5809740_1"}, {"filename": "UNIDADE_I_SLIDESDE_AULA.pdf", "secao": "UNIDADE I", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186664-dt-content-rid-11069241_1/xid-11069241_1"}, {"filename": "UNIDADE_I_TEXTO_PARA_LEITURA.pdf", "secao": "UNIDADE I", "titulo": "TEXTO PARA LEITURA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186664-dt-content-rid-12601519_1/xid-12601519_1"}, {"filename": "UNIDADE_II_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE II", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186667-dt-content-rid-5809742_1/xid-5809742_1"}, {"filename": "UNIDADE_II_SLIDESDE_AULA.pdf", "secao": "UNIDADE II", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186667-dt-content-rid-11069242_1/xid-11069242_1"}, {"filename": "UNIDADE_III_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE III", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186670-dt-content-rid-5809744_1/xid-5809744_1"}, {"filename": "UNIDADE_III_SLIDESDE_AULA.pdf", "secao": "UNIDADE III", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186670-dt-content-rid-11080398_1/xid-11080398_1"}, {"filename": "UNIDADE_IV_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE IV", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186673-dt-content-rid-5809746_1/xid-5809746_1"}, {"filename": "UNIDADE_IV_SLIDESDE_AULA.pdf", "secao": "UNIDADE IV", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186673-dt-content-rid-11087736_1/xid-11087736_1"}, {"filename": "Fórum_de_discussão_TEXTO_COMPLEMENTAR.pdf", "secao": "Fórum de discussão", "titulo": "TEXTO COMPLEMENTAR", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186677-dt-content-rid-12601518_1/xid-12601518_1"}]}, {"id": "_475898_1", "codigo": "8515-35", "fullname": "PROJETO INTEGRADO MULTIDISCIPLINAR III - CM", "tarefas_count": 1, "pdfs_count": 2, "presencas": [], "notas_trabalhos": [], "pdfs": [{"filename": "MANUAL_DO_PIM_MANUAL_PIM_III.pdf", "secao": "MANUAL DO PIM", "titulo": "MANUAL PIM III", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5328190-dt-content-rid-18938818_1/xid-18938818_1"}, {"filename": "ORIENTAÇÕES_SLIDES.pdf", "secao": "ORIENTAÇÕES", "titulo": "SLIDES", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5328191-dt-content-rid-18938819_1/xid-18938819_1"}]}, {"id": "_475900_1", "codigo": "8516-35", "fullname": "PROJETO INTEGRADO MULTIDISCIPLINAR IV - CM", "tarefas_count": 1, "pdfs_count": 2, "presencas": [], "notas_trabalhos": [], "pdfs": [{"filename": "MANUAL_DO_PIM_MANUAL_PIM_IV.pdf", "secao": "MANUAL DO PIM", "titulo": "MANUAL PIM IV", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5328198-dt-content-rid-18920899_1/xid-18920899_1"}, {"filename": "ORIENTAÇÕES_SLIDES.pdf", "secao": "ORIENTAÇÕES", "titulo": "SLIDES", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5328199-dt-content-rid-18920900_1/xid-18920900_1"}]}, {"id": "_464449_1", "codigo": "7600-60", "fullname": "TECNICAS EM ESTETICA CORPORAL", "tarefas_count": 9, "pdfs_count": 18, "presencas": [], "notas_trabalhos": [], "pdfs": [{"filename": "PLANO_DE_ENSINO.pdf", "secao": "PLANO DE ENSINO", "titulo": "PLANO DE ENSINO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186561-dt-content-rid-12635259_1/xid-12635259_1"}, {"filename": "APRESENTAÇÃO_DA_DISCIPLINA_SLIDESDE_AULA.pdf", "secao": "APRESENTAÇÃO DA DISCIPLINA", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186562-dt-content-rid-3514121_1/xid-3514121_1"}, {"filename": "ORIENTAÇÕES_PARA_A_PRÁTICA_MANUAL.pdf", "secao": "ORIENTAÇÕES PARA A PRÁTICA", "titulo": "MANUAL", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186563-dt-content-rid-3514122_1/xid-3514122_1"}, {"filename": "ORIENTAÇÕES_PARA_A_PRÁTICA_RELATÓRIO.pdf", "secao": "ORIENTAÇÕES PARA A PRÁTICA", "titulo": "RELATÓRIO", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186563-dt-content-rid-5447738_1/xid-5447738_1"}, {"filename": "ORIENTAÇÕES_PARA_A_PRÁTICA_ROTEIROS.pdf", "secao": "ORIENTAÇÕES PARA A PRÁTICA", "titulo": "ROTEIROS", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186563-dt-content-rid-3514123_1/xid-3514123_1"}, {"filename": "UNIDADE_I_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE I", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186564-dt-content-rid-3514126_1/xid-3514126_1"}, {"filename": "UNIDADE_I_RESOLUÇÃO_LT.pdf", "secao": "UNIDADE I", "titulo": "RESOLUÇÃO LT", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186564-dt-content-rid-3514128_1/xid-3514128_1"}, {"filename": "UNIDADE_I_SLIDESDE_AULA.pdf", "secao": "UNIDADE I", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186564-dt-content-rid-3514127_1/xid-3514127_1"}, {"filename": "UNIDADE_II_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE II", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186567-dt-content-rid-3514129_1/xid-3514129_1"}, {"filename": "UNIDADE_II_RESOLUÇÃO_LT.pdf", "secao": "UNIDADE II", "titulo": "RESOLUÇÃO LT", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186567-dt-content-rid-3514131_1/xid-3514131_1"}, {"filename": "UNIDADE_II_SLIDESDE_AULA.pdf", "secao": "UNIDADE II", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186567-dt-content-rid-3514130_1/xid-3514130_1"}, {"filename": "UNIDADE_III_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE III", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186570-dt-content-rid-3514132_1/xid-3514132_1"}, {"filename": "UNIDADE_III_RESOLUÇÃO_LT.pdf", "secao": "UNIDADE III", "titulo": "RESOLUÇÃO LT", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186570-dt-content-rid-3514134_1/xid-3514134_1"}, {"filename": "UNIDADE_III_SLIDESDE_AULA.pdf", "secao": "UNIDADE III", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186570-dt-content-rid-3514133_1/xid-3514133_1"}, {"filename": "UNIDADE_IV_LIVRO-TEXTO_(LT).pdf", "secao": "UNIDADE IV", "titulo": "LIVRO-TEXTO (LT)", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186573-dt-content-rid-3514135_1/xid-3514135_1"}, {"filename": "UNIDADE_IV_RESOLUÇÃO_LT.pdf", "secao": "UNIDADE IV", "titulo": "RESOLUÇÃO LT", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186573-dt-content-rid-3514137_1/xid-3514137_1"}, {"filename": "UNIDADE_IV_SLIDESDE_AULA.pdf", "secao": "UNIDADE IV", "titulo": "SLIDESDE AULA", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186573-dt-content-rid-3514136_1/xid-3514136_1"}, {"filename": "FÓRUM_DE_DISCUSSÃO_TEXTO_COMPLEMENTAR.pdf", "secao": "FÓRUM DE DISCUSSÃO", "titulo": "TEXTO COMPLEMENTAR", "url": "https://ava.ead.unip.br/bbcswebdav/pid-5186577-dt-content-rid-3514125_1/xid-3514125_1"}]}]};
+
+    let currentFilter = 'foco';
+
+    function calcLiveStatus(t) {
+      if (t.entregue) {
+        return { cls: 'ok', label: '✅ Entregue', category: 'entregue' };
+      }
+      if (!t.duedate || t.duedate <= 0) {
+        return { cls: 'neutral', label: '⚪ Sem prazo', category: 'sem_prazo' };
+      }
+      const now = Date.now() / 1000;
+      const delta = t.duedate - now;
+      if (delta < 0) {
+        const days = Math.floor(Math.abs(delta) / 86400);
+        if (t.canedit !== false) {
+          return { cls: 'warn', label: `🔓 Atrasada (${days}d atrás - Aberta)`, category: 'atrasada_aberta' };
+        }
+        return { cls: 'neutral', label: `⚫ Encerrada (${days}d atrás)`, category: 'encerrada' };
+      } else if (delta <= 48 * 3600) {
+        const hours = Math.max(1, Math.floor(delta / 3600));
+        return { cls: 'urgent', label: `🔴 URGENTE (${hours}h restantes)`, category: 'urgente' };
+      } else if (delta <= 7 * 86400) {
+        const days = Math.max(1, Math.floor(delta / 86400));
+        return { cls: 'warn', label: `🟡 Esta Semana (${days}d restantes)`, category: 'semana' };
+      } else {
+        const days = Math.floor(delta / 86400);
+        return { cls: 'ok', label: `🟢 No Prazo (${days}d restantes)`, category: 'no_prazo' };
+      }
+    }
+
+    function escapeHtml(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function updateKPIs() {
+      if (DATA.aluno && DATA.aluno.nome) {
+        document.getElementById('student-info').textContent = `${DATA.aluno.nome} • ${DATA.aluno.curso}`;
+      }
+      document.getElementById('sync-time').textContent = 'Sync: ' + (DATA.ultima_sincronizacao || '');
+      let urgent7d = 0, onTime = 0, openLate = 0, done = 0;
+      for (const t of DATA.todas_tarefas) {
+        const st = calcLiveStatus(t);
+        if (st.category === 'entregue') done++;
+        else if (st.category === 'urgente' || st.category === 'semana') urgent7d++;
+        else if (st.category === 'no_prazo') onTime++;
+        else if (st.category === 'atrasada_aberta') openLate++;
+      }
+      document.getElementById('kpi-urgent').textContent = urgent7d;
+      document.getElementById('kpi-ontime').textContent = onTime;
+      document.getElementById('kpi-openlate').textContent = openLate;
+      document.getElementById('kpi-done').textContent = done;
+    }
+
+    function syncActiveStates() {
+      document.querySelectorAll('.chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.filter === currentFilter);
+      });
+      const kpiUrgent = document.getElementById('kpi-card-urgent');
+      const kpiOntime = document.getElementById('kpi-card-ontime');
+      const kpiOpenlate = document.getElementById('kpi-card-openlate');
+      if (kpiUrgent) kpiUrgent.classList.toggle('active', currentFilter === 'urgentes_7d' || currentFilter === 'foco');
+      if (kpiOntime) kpiOntime.classList.toggle('active', currentFilter === 'no_prazo' || currentFilter === 'foco');
+      if (kpiOpenlate) kpiOpenlate.classList.toggle('active', currentFilter === 'atrasadas_abertas');
+    }
+
+    function setFilter(f) {
+      currentFilter = f;
+      syncActiveStates();
+      switchTab('radar');
+      renderTasks();
+    }
+
+    function clearSearch() {
+      const inp = document.getElementById('search-input');
+      if (inp) inp.value = '';
+      renderTasks();
+    }
+
+    function filterByCourse(courseCode) {
+      const course = DATA.cursos.find(c => c.codigo === courseCode || c.id === courseCode);
+      if (!course) return;
+      const inp = document.getElementById('search-input');
+      if (inp) inp.value = course.fullname;
+      currentFilter = 'todas_pendentes';
+      syncActiveStates();
+      switchTab('radar');
+      renderTasks();
+    }
+
+    function toggleIntro(id) {
+      const el = document.getElementById('intro-' + id);
+      if (!el) return;
+      const isOpen = el.classList.toggle('open');
+      const btn = document.getElementById('btn-intro-' + id);
+      if (btn && btn.dataset.labelOpen && btn.dataset.labelClosed) {
+        btn.textContent = isOpen ? btn.dataset.labelOpen : btn.dataset.labelClosed;
+      }
+    }
+
+    function handleCardClick(e, id) {
+      if (e.target.closest('a, button, .intro-box')) return;
+      toggleIntro(id);
+    }
+
+    function renderTasks() {
+      const inp = document.getElementById('search-input');
+      const rawQ = inp ? inp.value : '';
+      const q = (rawQ || '').toLowerCase().trim();
+      const clearBtn = document.getElementById('clear-search-btn');
+      if (clearBtn) clearBtn.classList.toggle('visible', q.length > 0);
+
+      const list = document.getElementById('radar-list');
+      const enriched = DATA.todas_tarefas
+        .filter(t => !t.entregue)
+        .map(t => ({ ...t, _live: calcLiveStatus(t) }));
+
+      const filtered = enriched.filter(t => {
+        if (q) {
+          const hay = `${t.nome} ${t.curso_nome} ${t.assign_id}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        const cat = t._live.category;
+        if (currentFilter === 'foco') {
+          return cat === 'urgente' || cat === 'semana' || cat === 'no_prazo';
+        } else if (currentFilter === 'urgentes_7d') {
+          return cat === 'urgente' || cat === 'semana';
+        } else if (currentFilter === 'no_prazo') {
+          return cat === 'no_prazo';
+        } else if (currentFilter === 'atrasadas_abertas') {
+          return cat === 'atrasada_aberta';
+        } else if (currentFilter === 'sem_prazo') {
+          return cat === 'sem_prazo';
+        }
+        return true;
+      });
+
+      filtered.sort((a, b) => {
+        const da = a.duedate > 0 ? a.duedate : 9999999999;
+        const db = b.duedate > 0 ? b.duedate : 9999999999;
+        return da - db;
+      });
+
+      const countEl = document.getElementById('results-count');
+      if (countEl) {
+        countEl.textContent = `Exibindo ${filtered.length} atividade(s)` + (q ? ` para "${rawQ.trim()}"` : '');
+      }
+
+      if (!filtered.length) {
+        list.innerHTML = `<div class="empty-state">🎉 Nenhuma atividade pendente encontrada neste filtro!</div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(t => {
+        const st = t._live;
+        const introText = t.intro || 'Atividade acadêmica regular da UNIP.';
+        return `
+          <div class="card card-${st.cls} clickable-card" data-assign-id="${t.assign_id}" onclick="handleCardClick(event, '${t.assign_id}')">
+            <div class="card-top">
+              <span class="badge badge-${st.cls}">${escapeHtml(st.label)}</span>
+              <span class="assign-id">ID: ${escapeHtml(t.assign_id)}</span>
+            </div>
+            <div class="course-tag">${escapeHtml(t.curso_nome)}</div>
+            <div class="task-title">${escapeHtml(t.nome)}</div>
+            <div class="meta-row">
+              <span>📅 Prazo: <strong>${escapeHtml(t.duedate_fmt)}</strong></span>
+              <span>${t.canedit !== false ? '🔓 Envio aberto' : '🔒 Envio bloqueado'}</span>
+            </div>
+            <div class="actions-row">
+              <a class="btn btn-primary" href="${escapeHtml(t.url)}" target="_blank" rel="noopener">Abrir no Portal/AVA ↗</a>
+              <button type="button" class="btn btn-intro-toggle" id="btn-intro-${t.assign_id}" data-label-closed="📄 Ver Instruções" data-label-open="🔼 Ocultar Instruções" onclick="toggleIntro('${t.assign_id}')">📄 Ver Instruções</button>
+            </div>
+            <div class="intro-box" id="intro-${t.assign_id}">
+              ${escapeHtml(introText)}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderCursos() {
+      const container = document.getElementById('cursos-list');
+      container.innerHTML = DATA.cursos.map(c => {
+        const pdfList = (c.pdfs || []).map(p => `• 📄 <a href="${escapeHtml(p.url)}" target="_blank" style="color:var(--accent);text-decoration:none">${escapeHtml(p.filename)}</a> <span style="color:var(--muted)">(${escapeHtml(p.secao)})</span>`).join('\n');
+        const courseTasks = DATA.todas_tarefas.filter(t => t.curso_id === c.id || t.curso_id === c.codigo);
+        const taskListHtml = courseTasks.map(t => {
+          const st = calcLiveStatus(t);
+          return `• <strong>${escapeHtml(t.nome)}</strong> — <span style="color:var(--accent)">${escapeHtml(st.label)}</span> (${escapeHtml(t.duedate_fmt)})`;
+        }).join('\n');
+
+        return `
+          <div class="card" data-course-id="${c.id}">
+            <div class="card-top">
+              <span class="course-tag">Cód: ${escapeHtml(c.codigo)}</span>
+              <span class="assign-id">${c.presencas ? c.presencas.length + ' presenças' : ''}</span>
+            </div>
+            <div class="task-title">${escapeHtml(c.fullname)}</div>
+            <div class="meta-row">
+              <span>📝 ${c.tarefas_count} tarefas/questionários</span>
+              <span>📄 ${c.pdfs_count} apostilas/PDFs</span>
+            </div>
+            <div class="actions-row">
+              ${c.pdfs_count > 0 ? `<button type="button" class="btn btn-pdfs-toggle" id="btn-intro-curso-${c.id}" data-label-closed="📂 Ver ${c.pdfs_count} Apostilas/PDFs" data-label-open="🔼 Ocultar PDFs" onclick="toggleIntro('curso-${c.id}')">📂 Ver ${c.pdfs_count} Apostilas/PDFs</button>` : ''}
+              ${c.tarefas_count > 0 ? `<button type="button" class="btn btn-tasks-toggle" id="btn-intro-curso-tasks-${c.id}" data-label-closed="📝 Ver ${c.tarefas_count} Atividades" data-label-open="🔼 Ocultar Atividades" onclick="toggleIntro('curso-tasks-${c.id}')">📝 Ver ${c.tarefas_count} Atividades</button>` : ''}
+              ${c.tarefas_count > 0 ? `<button type="button" class="btn btn-primary btn-filter-course" onclick="filterByCourse('${c.codigo}')">🚨 Filtrar no Radar</button>` : ''}
+            </div>
+            ${c.pdfs_count > 0 ? `<div class="intro-box" id="intro-curso-${c.id}">${pdfList}</div>` : ''}
+            ${c.tarefas_count > 0 ? `<div class="intro-box" id="intro-curso-tasks-${c.id}">${taskListHtml}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderNotas() {
+      const container = document.getElementById('notas-list');
+      container.innerHTML = DATA.cursos.map(c => {
+        const pres = c.presencas || [];
+        const trab = c.notas_trabalhos || [];
+        if (!pres.length && !trab.length) {
+          return `
+            <div class="card">
+              <div class="course-tag">Cód: ${escapeHtml(c.codigo)}</div>
+              <div class="task-title">${escapeHtml(c.fullname)}</div>
+              <div class="empty-state" style="padding:16px 0">Sem notas ou registros de frequência até o momento.</div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="card">
+            <div class="course-tag">Cód: ${escapeHtml(c.codigo)}</div>
+            <div class="task-title">${escapeHtml(c.fullname)}</div>
+
+            ${trab.length ? `
+              <div style="font-size:12px;font-weight:700;color:var(--accent);margin-top:8px">📝 Trabalhos & Notas:</div>
+              <table class="grade-table">
+                <thead><tr><th>Trabalho</th><th style="text-align:center">Situação / Nota</th></tr></thead>
+                <tbody>
+                  ${trab.map(t => `<tr><td>${escapeHtml(t.trabalho)}</td><td class="grade-val">${escapeHtml(t.nota)}</td></tr>`).join('')}
+                </tbody>
+              </table>
+            ` : ''}
+
+            ${pres.length ? `
+              <div style="font-size:12px;font-weight:700;color:#34d399;margin-top:12px">📅 Presenças em Aulas Práticas (${pres.length} aulas):</div>
+              <table class="grade-table">
+                <thead><tr><th>Data da Aula</th><th style="text-align:center">Turno</th><th style="text-align:center">Presença</th></tr></thead>
+                <tbody>
+                  ${pres.map(p => `<tr><td>${escapeHtml(p.data)}</td><td style="text-align:center;color:var(--muted)">${escapeHtml(p.periodo)}</td><td style="text-align:center;color:#34d399">✅ Presente</td></tr>`).join('')}
+                </tbody>
+              </table>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderEntregues() {
+      const container = document.getElementById('entregues-list');
+      const entregues = DATA.todas_tarefas
+        .filter(t => t.entregue)
+        .sort((a, b) => (b.duedate || 0) - (a.duedate || 0));
+
+      if (!entregues.length) {
+        container.innerHTML = `<div class="empty-state">Nenhuma tarefa marcada como concluída ainda.</div>`;
+        return;
+      }
+
+      container.innerHTML = entregues.map(t => {
+        const introText = t.intro || 'Atividade acadêmica regular da UNIP.';
+        return `
+          <div class="card card-ok clickable-card" onclick="handleCardClick(event, 'done-${t.assign_id}')">
+            <div class="card-top">
+              <span class="badge badge-ok">✅ Entregue • ${escapeHtml(t.status_avaliacao || 'Concluído')}</span>
+              <span class="assign-id">ID: ${escapeHtml(t.assign_id)}</span>
+            </div>
+            <div class="course-tag">${escapeHtml(t.curso_nome)}</div>
+            <div class="task-title">${escapeHtml(t.nome)}</div>
+            <div class="meta-row">
+              <span>📅 Prazo: ${escapeHtml(t.duedate_fmt)}</span>
+              <span>${escapeHtml(t.status_envio_raw || 'Concluído')}</span>
+            </div>
+            <div class="actions-row">
+              <a class="btn btn-primary" href="${escapeHtml(t.url)}" target="_blank" rel="noopener">Abrir no Portal/AVA ↗</a>
+              <button type="button" class="btn btn-intro-toggle" id="btn-intro-done-${t.assign_id}" data-label-closed="📄 Ver Instruções" data-label-open="🔼 Ocultar Instruções" onclick="toggleIntro('done-${t.assign_id}')">📄 Ver Instruções</button>
+            </div>
+            <div class="intro-box" id="intro-done-${t.assign_id}">
+              ${escapeHtml(introText)}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      const panel = document.getElementById('tab-' + tab);
+      if (panel) panel.classList.add('active');
+      const btn = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
+      if (btn) btn.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    updateKPIs();
+    syncActiveStates();
+    renderTasks();
+    renderCursos();
+    renderNotas();
+    renderEntregues();
+    setInterval(() => { updateKPIs(); renderTasks(); }, 60000);
+  </script>
+</body>
+</html>
